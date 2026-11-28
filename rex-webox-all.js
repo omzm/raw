@@ -4,9 +4,9 @@
 var WidgetMetadata = {
   "id": "top.ddgksf2013.rex.weboxall",
   "title": "WeBox 多源合集",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "requiredVersion": "0.0.1",
-  "description": "WeBox 源包 4 个源（暴风/量子/欧乐/独播库）+ 大师兄合并的纯播放源模块：在 TMDB 详情页按片名自动多源匹配，播放资源里汇总全部线路供选择。",
+  "description": "WeBox 源包 4 个源（暴风/量子/欧乐/独播库）+ 大师兄（仅取大师兄线路）合并的纯播放源模块：在 TMDB 详情页按片名自动多源匹配，播放资源里汇总全部线路供选择。",
   "author": "ddgksf2013",
   "site": "https://ddgksf2013.top/webox/index.json",
   "modules": [
@@ -1079,6 +1079,7 @@ async function loadResource(params) {
     seen[identity] = true;
     candidates.push({ source: source, episode: episode });
   });
+  candidates = candidates.filter(function (entry) { return dsText(entry.source.name) === "大师兄" || dsText(entry.source.code) === "xiguam3u8"; });
   var all = await dsPool(candidates.slice(0, 20), 6, function (entry) {
     return Date.now() >= deadline ? null : dsLine(entry.source, entry.episode, dsText(detail.vod_name), deadline);
   });
