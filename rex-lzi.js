@@ -6,7 +6,7 @@
 var WidgetMetadata = {
   "id": "top.ddgksf2013.rex.lzi",
   "title": "量子资源",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "requiredVersion": "0.0.1",
   "description": "量子资源 纯播放源：在 TMDB 详情页按片名自动匹配出源，播放资源里可选线路。",
   "author": "ddgksf2013",
@@ -63,7 +63,7 @@ function parseLines(v) {
 
 
 function epStripDate(s) {
-  return String(s || "").replace(/^\s*\d{4}[-./]\d{1,2}[-./]\d{1,2}\s*/, "").replace(/^\s*\d{8}\s*/, "").trim();
+  return String(s || "").replace(/^\s*\d{4}[-./]\d{1,2}[-./]\d{1,2}\s*/, "").replace(/^\s*\d{8}\s*/, "").trim().replace(/^[（(【\[]+/, "").replace(/[)）】\]]+$/, "").trim();
 }
 function epParseKey(name) {
   var s = epStripDate(name);
@@ -81,6 +81,10 @@ function pickEpisode(episodes, epIdx, episodeName, airDate) {
   var i, k;
   var want = epParseKey(episodeName);
   if (want) {
+    var d0 = String(airDate || "").replace(/-/g, "");
+    if (/^\d{8}$/.test(d0)) {
+      for (i = 0; i < episodes.length; i++) { var dm = /第\s*(\d{8})\s*期\s*([上下中])?/.exec(episodes[i].name); if (dm && dm[1] === d0 && (dm[2] || "") === want.part) return episodes[i]; }
+    }
     for (i = 0; i < episodes.length; i++) { k = epParseKey(episodes[i].name); if (k && k.num === want.num && k.part === want.part && epIsBare(episodes[i].name)) return episodes[i]; }
     for (i = 0; i < episodes.length; i++) { k = epParseKey(episodes[i].name); if (k && k.num === want.num && k.part === want.part && !EP_HARD_JUNK.test(episodes[i].name)) return episodes[i]; }
     for (i = 0; i < episodes.length; i++) { k = epParseKey(episodes[i].name); if (k && k.num === want.num && k.part === want.part) return episodes[i]; }
