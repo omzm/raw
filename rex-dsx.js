@@ -1,7 +1,7 @@
 var WidgetMetadata = {
   "id": "omzm.rex.dashixiong",
   "title": "大师兄",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "requiredVersion": "0.0.1",
   "description": "大师兄单线路播放源（提取自驰时录模块，只取「大师兄」线路）：在 TMDB 详情页按片名匹配，探测通过才返回。",
   "author": "TG@ZenMoFiShi",
@@ -307,7 +307,7 @@ function dsMatch(item, wanted, params) {
   if (params.year && dsText(item.vod_year) === String(params.year)) score += score ? 5 : 0;
   return score;
 }
-function dsEpisode(source, requested, movie, episodeName, airDate) {
+function dsEpisode(source, requested, movie) {
   var text = dsText(source.url), entries = [], explicit = false;
   text.split("#").forEach(function (part) {
     var at = part.indexOf("$");
@@ -316,42 +316,8 @@ function dsEpisode(source, requested, movie, episodeName, airDate) {
     if (m) explicit = true;
     entries.push({ title: title, origin: url, number: m ? Number(m[1]) : null });
   });
-  var wm = dsText(episodeName).match(/第\s*(\d+)\s*期\s*([上下中])?/) || dsText(episodeName).match(/第\s*(\d+)\s*[集话話]\s*([上下中])?/);
-  if (wm && !movie) {
-    var wnum = Number(wm[1]), wpart = wm[2] || "";
-    var exact = entries.filter(function (e) {
-      var em = e.title.match(/第\s*(\d+)\s*期\s*([上下中])?/) || e.title.match(/第\s*(\d+)\s*[集话話]\s*([上下中])?/);
-      return em && Number(em[1]) === wnum && (em[2] || "") === wpart;
-    });
-    var bareE = exact.filter(function (e) { return !/纯享|加更|花絮|彩蛋|特辑|回顾|先导|预告|解说/.test(e.title); });
-    if (bareE.length) return bareE[0];
-    var softE = exact.filter(function (e) { return !/加更|花絮|彩蛋|特辑|回顾|先导|预告|解说/.test(e.title); });
-    if (softE.length) return softE[0];
-    if (exact.length) return exact[0];
-  }
-  var dd2 = dsText(airDate).replace(/-/g, "");
-  if (/^\d{8}$/.test(dd2) && !movie) {
-    var datedAll = entries.filter(function (e) { var mm = /(\d{4})[-.]?(\d{1,2})[-.]?(\d{1,2})/.exec(e.title); return mm && (mm[1] + ("0" + mm[2]).slice(-2) + ("0" + mm[3]).slice(-2)) === dd2; });
-    if (datedAll.length) {
-      var mainsD = datedAll.filter(function (e) { return !/纯享|加更|花絮|彩蛋|特辑|回顾|先导|预告|片花|解说/.test(e.title); });
-      var wp2 = wm ? (wm[2] || "") : "";
-      if (wp2 && mainsD.length > 1) { var bp = mainsD.filter(function (e) { return e.title.indexOf(wp2) >= 0; }); if (bp.length) mainsD = bp; }
-      if (mainsD.length) return mainsD[0];
-      return datedAll[0];
-    }
-  }
   if (movie) return requested === 1 ? entries[0] || null : null;
-  var numbered = entries.filter(function (e) { return e.number === requested; });
-  if (numbered.length === 1) return numbered[0];
-  // 综艺兜底：只数正片（第N期上/下、日期+上/下），滤掉回顾/先导/纯享/加更等后按序取
-  var mainE = entries.filter(function (e) {
-    if (/纯享|加更|花絮|彩蛋|特辑|回顾|先导|预告|片花|解说/.test(e.title)) return false;
-    var s = e.title.replace(/^\s*\d{8}\s*/, "").replace(/^\s*\d{4}[-./]\d{1,2}[-./]\d{1,2}\s*/, "").trim();
-    if (/^第\s*\d+\s*(期|集|话|話)\s*[上下中]?$/.test(s)) return true;
-    return s === "上" || s === "下" || s === "中";
-  });
-  if (requested >= 1 && mainE.length >= requested) return mainE[requested - 1];
-  if (numbered.length > 1) return numbered[0];
+  for (var i = 0; i < entries.length; i++) if (entries[i].number === requested) return entries[i];
   return explicit ? null : entries[requested - 1] || null;
 }
 function dsParseTargets(source, origin) {
@@ -433,7 +399,7 @@ async function loadResource(params) {
   if (!detail || Number(detail.vod_id) !== Number(ranked[0].item.vod_id) || dsExclude(detail, wanted)) return [];
   var movie = Number(detail.type_id) === 1, sources = Array.isArray(detail.vod_url_with_player) ? detail.vod_url_with_player : [], candidates = [], seen = {};
   sources.forEach(function (source) {
-    var episode = dsEpisode(source, requested, movie, params.episodeName, params.airDate), identity = dsText(source.code || source.name) + ":" + (episode && episode.origin || "");
+    var episode = dsEpisode(source, requested, movie), identity = dsText(source.code || source.name) + ":" + (episode && episode.origin || "");
     if (!episode || !episode.origin || seen[identity]) return;
     seen[identity] = true;
     candidates.push({ source: source, episode: episode });
