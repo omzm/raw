@@ -5,7 +5,7 @@
 var WidgetMetadata = {
   "id": "top.ddgksf2013.rex.dbku",
   "title": "独播库",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "requiredVersion": "0.0.1",
   "description": "独播库 纯播放源：在 TMDB 详情页按片名自动匹配出源，播放资源里可选线路。",
   "author": "ddgksf2013",
@@ -172,26 +172,43 @@ function epIsBare(name) {
 var EP_JUNK = /纯享|加更|花絮|彩蛋|特辑|回顾|先导|预告|片花|解说/;
 var EP_HARD_JUNK = /加更|花絮|彩蛋|特辑|回顾|先导|预告|解说/;
 // 综艺对位：先按 TMDB 集名（第N期上/下）精确匹配，再按播出日期，再只数正片按序取，最后原始顺序兜底
+function epDateOf(name) {
+  var m = /(\d{4})[-.]?(\d{1,2})[-.]?(\d{1,2})/.exec(String(name || ""));
+  if (!m) return "";
+  return m[1] + ("0" + m[2]).slice(-2) + ("0" + m[3]).slice(-2);
+}
+function epPartOf(name) {
+  var k = epParseKey(name);
+  if (k && k.part) return k.part;
+  var s = epStripDate(name);
+  if (s === "上" || s === "下" || s === "中") return s;
+  var m = /第\s*\d{8}\s*期\s*([上下中])/.exec(String(name || ""));
+  return m ? m[1] : "";
+}
+// 选集对位：综艺优先按播出日期对正片（源站按日期更新正片），其次按集名第N期上/下，再只数正片按序取
 function pickEpisode(episodes, epIdx, episodeName, airDate) {
   if (!episodes || !episodes.length) return null;
   var i, k;
   var want = epParseKey(episodeName);
-  if (want) {
-    var d0 = String(airDate || "").replace(/-/g, "");
-    if (/^\d{8}$/.test(d0)) {
-      for (i = 0; i < episodes.length; i++) { var dm = /第\s*(\d{8})\s*期\s*([上下中])?/.exec(episodes[i].name); if (dm && dm[1] === d0 && (dm[2] || "") === want.part) return episodes[i]; }
+  var d = String(airDate || "").replace(/-/g, "");
+  if (/^\d{8}$/.test(d)) {
+    var dated = episodes.filter(function (x) { return epDateOf(x.name) === d; });
+    if (dated.length) {
+      var mains = dated.filter(function (x) { return !EP_JUNK.test(x.name); });
+      if (want && want.part) {
+        var byPart = mains.filter(function (x) { return epPartOf(x) === want.part; });
+        if (byPart.length) return byPart[0];
+      }
+      if (mains.length) return mains[0];
+      var soft = dated.filter(function (x) { return !EP_HARD_JUNK.test(x.name); });
+      if (want && want.part) { var sp = soft.filter(function (x) { return epPartOf(x) === want.part; }); if (sp.length) return sp[0]; }
+      if (soft.length) return soft[0];
     }
+  }
+  if (want) {
     for (i = 0; i < episodes.length; i++) { k = epParseKey(episodes[i].name); if (k && k.num === want.num && k.part === want.part && epIsBare(episodes[i].name)) return episodes[i]; }
     for (i = 0; i < episodes.length; i++) { k = epParseKey(episodes[i].name); if (k && k.num === want.num && k.part === want.part && !EP_HARD_JUNK.test(episodes[i].name)) return episodes[i]; }
     for (i = 0; i < episodes.length; i++) { k = epParseKey(episodes[i].name); if (k && k.num === want.num && k.part === want.part) return episodes[i]; }
-  }
-  var d = String(airDate || "").replace(/-/g, "");
-  if (/^\d{8}$/.test(d)) {
-    var dated = episodes.filter(function (x) { return String(x.name || "").indexOf(d) === 0; });
-    if (want && want.part) { for (i = 0; i < dated.length; i++) { if (epStripDate(dated[i].name) === want.part) return dated[i]; } }
-    var bareDated = dated.filter(function (x) { return epIsBare(x.name); });
-    if (bareDated.length === 1) return bareDated[0];
-    if (want) { for (i = 0; i < dated.length; i++) { k = epParseKey(dated[i].name); if (k && k.num === want.num && k.part === want.part && !EP_HARD_JUNK.test(dated[i].name)) return dated[i]; } }
   }
   var main = episodes.filter(function (x) {
     if (EP_JUNK.test(x.name)) return false;
@@ -200,7 +217,7 @@ function pickEpisode(episodes, epIdx, episodeName, airDate) {
     if (sd === "上" || sd === "下" || sd === "中") return true;
     return !!epParseKey(x.name);
   });
-  if (!main.length) main = episodes.filter(function (x) { return /^\d{8}/.test(String(x.name || "")) && !EP_JUNK.test(x.name); });
+  if (!main.length) main = episodes.filter(function (x) { return !!epDateOf(x.name) && !EP_JUNK.test(x.name); });
   if (epIdx >= 0 && main.length > epIdx) return main[epIdx];
   return episodes[epIdx] || null;
 }
