@@ -65,7 +65,7 @@ async function loadList(params) {
   var q = { ac: "detail", pg: page };
   if (params.type) q.t = params.type;
   var data = await apiGet(q);
-  if (!data || !Array.isArray(data.list)) throw new Error("电影天堂 接口返回异常");
+  if (!data || !Array.isArray(data.list)) throw new Error(TITLE + " 接口返回异常");
   return data.list.map(toItem);
 }
 
