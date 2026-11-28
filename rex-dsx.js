@@ -1,7 +1,7 @@
 var WidgetMetadata = {
   "id": "omzm.rex.dashixiong",
   "title": "大师兄",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "requiredVersion": "0.0.1",
   "description": "大师兄单线路播放源（提取自驰时录模块，只取「大师兄」线路）：在 TMDB 详情页按片名匹配，探测通过才返回。",
   "author": "TG@ZenMoFiShi",
@@ -329,17 +329,16 @@ function dsEpisode(source, requested, movie, episodeName, airDate) {
     if (softE.length) return softE[0];
     if (exact.length) return exact[0];
   }
-  var dd = dsText(airDate).replace(/-/g, "");
-  if (dd && !movie) {
-    var wpart2 = wm ? (wm[2] || "") : "";
-    var datedE = entries.filter(function (e) { return e.title.indexOf(dd) === 0; });
-    var di;
-    if (wpart2) {
-      for (di = 0; di < datedE.length; di++) { if (datedE[di].title.slice(8).trim() === wpart2) return datedE[di]; }
-      for (di = 0; di < datedE.length; di++) { var rest = datedE[di].title.slice(8); if (rest.indexOf(wpart2) === 0 && !/加更|花絮|彩蛋|特辑|回顾|先导|预告|解说/.test(rest)) return datedE[di]; }
+  var dd2 = dsText(airDate).replace(/-/g, "");
+  if (/^\d{8}$/.test(dd2) && !movie) {
+    var datedAll = entries.filter(function (e) { var mm = /(\d{4})[-.]?(\d{1,2})[-.]?(\d{1,2})/.exec(e.title); return mm && (mm[1] + ("0" + mm[2]).slice(-2) + ("0" + mm[3]).slice(-2)) === dd2; });
+    if (datedAll.length) {
+      var mainsD = datedAll.filter(function (e) { return !/纯享|加更|花絮|彩蛋|特辑|回顾|先导|预告|片花|解说/.test(e.title); });
+      var wp2 = wm ? (wm[2] || "") : "";
+      if (wp2 && mainsD.length > 1) { var bp = mainsD.filter(function (e) { return e.title.indexOf(wp2) >= 0; }); if (bp.length) mainsD = bp; }
+      if (mainsD.length) return mainsD[0];
+      return datedAll[0];
     }
-    var bareD = datedE.filter(function (e) { return !/纯享|加更|花絮|彩蛋|特辑|回顾|先导|预告|解说/.test(e.title.slice(8)); });
-    if (bareD.length === 1 && !wm) return bareD[0];
   }
   if (movie) return requested === 1 ? entries[0] || null : null;
   var numbered = entries.filter(function (e) { return e.number === requested; });
