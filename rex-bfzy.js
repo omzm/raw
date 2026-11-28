@@ -6,7 +6,7 @@
 var WidgetMetadata = {
   "id": "top.ddgksf2013.rex.bfzy",
   "title": "暴风资源",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "requiredVersion": "0.0.1",
   "description": "暴风资源 纯播放源：在 TMDB 详情页按片名自动匹配出源，播放资源里可选线路。",
   "author": "ddgksf2013",
@@ -27,7 +27,7 @@ var BASE = "https://apibfzy.com/api.php/provide/vod";
 var TITLE = "暴风资源";
 
 async function apiGet(extra) {
-  var r = await Widget.http.get(BASE, { params: extra });
+  var r = await Widget.http.request({ url: BASE, method: "GET", params: extra, timeout: 10 });
   return r.data;
 }
 
@@ -149,6 +149,7 @@ async function loadResource(params) {
   if (epIdx < 0) epIdx = 0;
   var found = await findVod(name, Number(params.season) || 0);
   if (!found) return [];
+  if (String(found.vod_play_url || "").trim()) return resourceForVod(found, epIdx);
   var full = await apiGet({ ac: "detail", ids: String(found.vod_id) });
   var fv = full && full.list && full.list[0];
   if (!fv) return [];
