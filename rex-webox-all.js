@@ -4,7 +4,7 @@
 var WidgetMetadata = {
   "id": "top.ddgksf2013.rex.weboxall",
   "title": "WeBox 多源合集",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "requiredVersion": "0.0.1",
   "description": "WeBox 源包 6 个源（电影天堂/非凡/暴风/量子/欧乐/独播库）合并的纯播放源模块：在 TMDB 详情页按片名自动多源匹配，播放资源里汇总全部线路供选择。",
   "author": "ddgksf2013",
@@ -26,7 +26,7 @@ var BASE = cfg.base;
 var TITLE = cfg.title;
 
 async function apiGet(extra) {
-  var r = await Widget.http.get(BASE, { params: extra });
+  var r = await Widget.http.request({ url: BASE, method: "GET", params: extra, timeout: 10 });
   return r.data;
 }
 
@@ -214,6 +214,7 @@ async function loadResource(params) {
   if (epIdx < 0) epIdx = 0;
   var found = await findVod(name, Number(params.season) || 0);
   if (!found) return [];
+  if (String(found.vod_play_url || "").trim()) return resourceForVod(found, epIdx);
   var full = await apiGet({ ac: "detail", ids: String(found.vod_id) });
   var fv = full && full.list && full.list[0];
   if (!fv) return [];
@@ -235,7 +236,7 @@ function absUrl(href) {
 }
 
 async function fetchHtml(url) {
-  var r = await Widget.http.get(url, { headers: { "User-Agent": UA, Referer: BASE + "/" } });
+  var r = await Widget.http.request({ url: url, method: "GET", headers: { "User-Agent": UA, Referer: BASE + "/" }, timeout: 10 });
   return String(r.data || "");
 }
 
@@ -458,7 +459,7 @@ function absUrl(href) {
 }
 
 async function fetchHtml(url) {
-  var r = await Widget.http.get(url, { headers: { "User-Agent": UA, Referer: BASE + "/" } });
+  var r = await Widget.http.request({ url: url, method: "GET", headers: { "User-Agent": UA, Referer: BASE + "/" }, timeout: 10 });
   return String(r.data || "");
 }
 
