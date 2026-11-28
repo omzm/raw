@@ -6,7 +6,7 @@
 var WidgetMetadata = {
   "id": "top.ddgksf2013.rex.bfzy",
   "title": "暴风资源",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "requiredVersion": "0.0.1",
   "description": "暴风资源 纯播放源：在 TMDB 详情页按片名自动匹配出源，播放资源里可选线路。",
   "author": "ddgksf2013",
@@ -68,13 +68,15 @@ function resourceForVod(v, epIdx) {
     var e = l.episodes[epIdx];
     if (!e) return;
     all.push({
-      name: TITLE + " · " + l.from,
+      name: TITLE,
       url: e.url,
-      description: (v.vod_name || "") + " · " + e.name + " · " + l.from
+      description: (v.vod_name || "") + " · " + e.name
     });
   });
   var direct = all.filter(function (s) { return /\.(m3u8|mp4)(\?|#|$)/i.test(s.url); });
-  return direct.length ? direct : all;
+  var picked = direct.length ? direct : all;
+  if (picked.length > 1) picked.forEach(function (s, i) { s.name = TITLE + " · 线路" + (i + 1); });
+  return picked;
 }
 
 function normTitle(s) {
