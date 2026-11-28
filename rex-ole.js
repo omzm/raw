@@ -5,7 +5,7 @@
 var WidgetMetadata = {
   "id": "top.ddgksf2013.rex.ole",
   "title": "欧乐影院",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "requiredVersion": "0.0.1",
   "description": "欧乐影院 纯播放源：在 TMDB 详情页按片名自动匹配出源，播放资源里可选线路。",
   "author": "ddgksf2013",
@@ -166,7 +166,14 @@ function pickEpisode(episodes, epIdx, episodeName, airDate) {
     if (bareDated.length === 1) return bareDated[0];
     if (want) { for (i = 0; i < dated.length; i++) { k = epParseKey(dated[i].name); if (k && k.num === want.num && k.part === want.part && !EP_HARD_JUNK.test(dated[i].name)) return dated[i]; } }
   }
-  var main = episodes.filter(function (x) { return epParseKey(x.name) && !EP_JUNK.test(x.name); });
+  var main = episodes.filter(function (x) {
+    if (EP_JUNK.test(x.name)) return false;
+    if (epIsBare(x.name)) return true;
+    var sd = epStripDate(x.name);
+    if (sd === "上" || sd === "下" || sd === "中") return true;
+    return !!epParseKey(x.name);
+  });
+  if (!main.length) main = episodes.filter(function (x) { return /^\d{8}/.test(String(x.name || "")) && !EP_JUNK.test(x.name); });
   if (epIdx >= 0 && main.length > epIdx) return main[epIdx];
   return episodes[epIdx] || null;
 }
