@@ -4,7 +4,7 @@
 var WidgetMetadata = {
   "id": "top.ddgksf2013.rex.weboxall",
   "title": "多源合集",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "requiredVersion": "0.0.1",
   "description": "4 个源（暴风/量子/欧乐/独播库）合并的纯播放源模块：在 TMDB 详情页按片名自动多源匹配，播放资源里汇总全部线路供选择。",
   "author": "ddgksf2013",
@@ -127,103 +127,12 @@ async function loadDetail(link) {
 
 // 某条影片在指定集数下的全部线路（优先只给可直链播放的 m3u8/mp4 线路）
 
-function epStripDate(s) {
-  return String(s || "").replace(/^\s*\d{4}[-./]\d{1,2}[-./]\d{1,2}\s*/, "").replace(/^\s*\d{8}\s*/, "").trim().replace(/^[（(【\[]+/, "").replace(/[)）】\]]+$/, "").trim();
-}
-function epParseKey(name) {
-  var s = epStripDate(name);
-  var m = /第\s*(\d+)\s*期\s*([上下中])?/.exec(s) || /第\s*(\d+)\s*[集话話]\s*([上下中])?/.exec(s);
-  return m ? { num: Number(m[1]), part: m[2] || "" } : null;
-}
-function epIsBare(name) {
-  return /^第\s*\d+\s*(期|集|话|話)\s*[上下中]?$/.test(epStripDate(name));
-}
-var EP_JUNK = /纯享|加更|花絮|彩蛋|特辑|回顾|先导|预告|片花|解说/;
-var EP_HARD_JUNK = /加更|花絮|彩蛋|特辑|回顾|先导|预告|解说/;
-// 综艺对位：先按 TMDB 集名（第N期上/下）精确匹配，再按播出日期，再只数正片按序取，最后原始顺序兜底
-function epDateOf(name) {
-  var m = /(\d{4})[-.]?(\d{1,2})[-.]?(\d{1,2})/.exec(String(name || ""));
-  if (!m) return "";
-  return m[1] + ("0" + m[2]).slice(-2) + ("0" + m[3]).slice(-2);
-}
-function epPartOf(name) {
-  var k = epParseKey(name);
-  if (k && k.part) return k.part;
-  var s = epStripDate(name);
-  if (s === "上" || s === "下" || s === "中") return s;
-  var m = /第\s*\d{8}\s*期\s*([上下中])/.exec(String(name || ""));
-  return m ? m[1] : "";
-}
-// 选集对位：综艺优先按播出日期对正片（源站按日期更新正片），其次按集名第N期上/下，再只数正片按序取
-function epDateOf(name) {
-  var m = /(\d{4})[-.]?(\d{1,2})[-.]?(\d{1,2})/.exec(String(name || ""));
-  if (!m) return "";
-  return m[1] + ("0" + m[2]).slice(-2) + ("0" + m[3]).slice(-2);
-}
-function epPartOf(name) {
-  var k = epParseKey(name);
-  if (k && k.part) return k.part;
-  var s = epStripDate(name);
-  if (s === "上" || s === "下" || s === "中") return s;
-  var m = /第\s*\d{8}\s*期\s*([上下中])/.exec(String(name || ""));
-  return m ? m[1] : "";
-}
-// 选集对位：综艺优先按播出日期对正片（源站按日期更新正片），其次按集名第N期上/下，再只数正片按序取
-function epDateOf(name) {
-  var m = /(\d{4})[-.]?(\d{1,2})[-.]?(\d{1,2})/.exec(String(name || ""));
-  if (!m) return "";
-  return m[1] + ("0" + m[2]).slice(-2) + ("0" + m[3]).slice(-2);
-}
-function epPartOf(name) {
-  var k = epParseKey(name);
-  if (k && k.part) return k.part;
-  var s = epStripDate(name);
-  if (s === "上" || s === "下" || s === "中") return s;
-  var m = /第\s*\d{8}\s*期\s*([上下中])/.exec(String(name || ""));
-  return m ? m[1] : "";
-}
-// 选集对位：综艺优先按播出日期对正片（源站按日期更新正片），其次按集名第N期上/下，再只数正片按序取
-function pickEpisode(episodes, epIdx, episodeName, airDate) {
-  if (!episodes || !episodes.length) return null;
-  var i, k;
-  var want = epParseKey(episodeName);
-  var d = String(airDate || "").replace(/-/g, "");
-  if (/^\d{8}$/.test(d)) {
-    var dated = episodes.filter(function (x) { return epDateOf(x.name) === d; });
-    if (dated.length) {
-      var mains = dated.filter(function (x) { return !EP_JUNK.test(x.name); });
-      if (want && want.part) {
-        var byPart = mains.filter(function (x) { return epPartOf(x) === want.part; });
-        if (byPart.length) return byPart[0];
-      }
-      if (mains.length) return mains[0];
-      var soft = dated.filter(function (x) { return !EP_HARD_JUNK.test(x.name); });
-      if (want && want.part) { var sp = soft.filter(function (x) { return epPartOf(x) === want.part; }); if (sp.length) return sp[0]; }
-      if (soft.length) return soft[0];
-    }
-  }
-  if (want) {
-    for (i = 0; i < episodes.length; i++) { k = epParseKey(episodes[i].name); if (k && k.num === want.num && k.part === want.part && epIsBare(episodes[i].name)) return episodes[i]; }
-    for (i = 0; i < episodes.length; i++) { k = epParseKey(episodes[i].name); if (k && k.num === want.num && k.part === want.part && !EP_HARD_JUNK.test(episodes[i].name)) return episodes[i]; }
-    for (i = 0; i < episodes.length; i++) { k = epParseKey(episodes[i].name); if (k && k.num === want.num && k.part === want.part) return episodes[i]; }
-  }
-  var main = episodes.filter(function (x) {
-    if (EP_JUNK.test(x.name)) return false;
-    if (epIsBare(x.name)) return true;
-    var sd = epStripDate(x.name);
-    if (sd === "上" || sd === "下" || sd === "中") return true;
-    return !!epParseKey(x.name);
-  });
-  if (!main.length) main = episodes.filter(function (x) { return !!epDateOf(x.name) && !EP_JUNK.test(x.name); });
-  if (epIdx >= 0 && main.length > epIdx) return main[epIdx];
-  return episodes[epIdx] || null;
-}
 
-function resourceForVod(v, epIdx, episodeName, airDate) {
+function resourceForVod(v, epIdx) {
   var lines = parseLines(v);
   var all = [];
   lines.forEach(function (l) {
-    var e = pickEpisode(l.episodes, epIdx, episodeName, airDate);
+    var e = l.episodes[epIdx];
     if (!e) return;
     all.push({
       name: TITLE,
@@ -309,11 +218,11 @@ async function loadResource(params) {
   if (epIdx < 0) epIdx = 0;
   var found = await findVod(name, Number(params.season) || 0);
   if (!found) return [];
-  if (String(found.vod_play_url || "").trim()) return resourceForVod(found, epIdx, params.episodeName, params.airDate);
+  if (String(found.vod_play_url || "").trim()) return resourceForVod(found, epIdx);
   var full = await apiGet({ ac: "detail", ids: String(found.vod_id) });
   var fv = full && full.list && full.list[0];
   if (!fv) return [];
-  return resourceForVod(fv, epIdx, params.episodeName, params.airDate);
+  return resourceForVod(fv, epIdx);
 }
   return { loadList: loadList, search: search, loadDetail: loadDetail, loadResource: loadResource };
 }
@@ -488,59 +397,13 @@ function pickBestCard(items, name, season) {
 
 // 拉详情页，按集汇总全部线路并逐条解析出真实地址（点中的线路排第一）
 
-function epStripDate(s) {
-  return String(s || "").replace(/^\s*\d{4}[-./]\d{1,2}[-./]\d{1,2}\s*/, "").replace(/^\s*\d{8}\s*/, "").trim().replace(/^[（(【\[]+/, "").replace(/[)）】\]]+$/, "").trim();
-}
-function epParseKey(name) {
-  var s = epStripDate(name);
-  var m = /第\s*(\d+)\s*期\s*([上下中])?/.exec(s) || /第\s*(\d+)\s*[集话話]\s*([上下中])?/.exec(s);
-  return m ? { num: Number(m[1]), part: m[2] || "" } : null;
-}
-function epIsBare(name) {
-  return /^第\s*\d+\s*(期|集|话|話)\s*[上下中]?$/.test(epStripDate(name));
-}
-var EP_JUNK = /纯享|加更|花絮|彩蛋|特辑|回顾|先导|预告|片花|解说/;
-var EP_HARD_JUNK = /加更|花絮|彩蛋|特辑|回顾|先导|预告|解说/;
-// 综艺对位：先按 TMDB 集名（第N期上/下）精确匹配，再按播出日期，再只数正片按序取，最后原始顺序兜底
-function pickEpisode(episodes, epIdx, episodeName, airDate) {
-  if (!episodes || !episodes.length) return null;
-  var i, k;
-  var want = epParseKey(episodeName);
-  if (want) {
-    var d0 = String(airDate || "").replace(/-/g, "");
-    if (/^\d{8}$/.test(d0)) {
-      for (i = 0; i < episodes.length; i++) { var dm = /第\s*(\d{8})\s*期\s*([上下中])?/.exec(episodes[i].name); if (dm && dm[1] === d0 && (dm[2] || "") === want.part) return episodes[i]; }
-    }
-    for (i = 0; i < episodes.length; i++) { k = epParseKey(episodes[i].name); if (k && k.num === want.num && k.part === want.part && epIsBare(episodes[i].name)) return episodes[i]; }
-    for (i = 0; i < episodes.length; i++) { k = epParseKey(episodes[i].name); if (k && k.num === want.num && k.part === want.part && !EP_HARD_JUNK.test(episodes[i].name)) return episodes[i]; }
-    for (i = 0; i < episodes.length; i++) { k = epParseKey(episodes[i].name); if (k && k.num === want.num && k.part === want.part) return episodes[i]; }
-  }
-  var d = String(airDate || "").replace(/-/g, "");
-  if (/^\d{8}$/.test(d)) {
-    var dated = episodes.filter(function (x) { return String(x.name || "").indexOf(d) === 0; });
-    if (want && want.part) { for (i = 0; i < dated.length; i++) { if (epStripDate(dated[i].name) === want.part) return dated[i]; } }
-    var bareDated = dated.filter(function (x) { return epIsBare(x.name); });
-    if (bareDated.length === 1) return bareDated[0];
-    if (want) { for (i = 0; i < dated.length; i++) { k = epParseKey(dated[i].name); if (k && k.num === want.num && k.part === want.part && !EP_HARD_JUNK.test(dated[i].name)) return dated[i]; } }
-  }
-  var main = episodes.filter(function (x) {
-    if (EP_JUNK.test(x.name)) return false;
-    if (epIsBare(x.name)) return true;
-    var sd = epStripDate(x.name);
-    if (sd === "上" || sd === "下" || sd === "中") return true;
-    return !!epParseKey(x.name);
-  });
-  if (!main.length) main = episodes.filter(function (x) { return /^\d{8}/.test(String(x.name || "")) && !EP_JUNK.test(x.name); });
-  if (epIdx >= 0 && main.length > epIdx) return main[epIdx];
-  return episodes[epIdx] || null;
-}
 
-async function sourcesFromDetail(detailUrl, epIdx, tapped, episodeName, airDate) {
+async function sourcesFromDetail(detailUrl, epIdx, tapped) {
   var $ = Widget.html.load(await fetchHtml(detailUrl));
   var title = $("a.vodlist_thumb").first().attr("title") || "";
   var groups = parseGroups($);
   var resolved = await Promise.all(groups.map(async function (g, gi) {
-    var ep = pickEpisode(g.episodes, epIdx, episodeName, airDate);
+    var ep = g.episodes[epIdx];
     if (!ep) return null;
     try {
       var playUrl = absUrl(ep.href);
@@ -584,7 +447,7 @@ async function loadResource(params) {
   var items = await search({ keyword: name, page: 1 });
   var best = pickBestCard(items, name, Number(params.season) || 0);
   if (!best) return [];
-  return sourcesFromDetail(best.link, epIdx, "", params.episodeName, params.airDate);
+  return sourcesFromDetail(best.link, epIdx, "");
 }
   return { loadList: loadList, search: search, loadDetail: loadDetail, loadResource: loadResource };
 })();
@@ -782,59 +645,13 @@ function pickBestCard(items, name, season) {
 
 // 拉详情页，按集汇总全部线路并逐条解析出真实地址（点中的线路排第一）
 
-function epStripDate(s) {
-  return String(s || "").replace(/^\s*\d{4}[-./]\d{1,2}[-./]\d{1,2}\s*/, "").replace(/^\s*\d{8}\s*/, "").trim().replace(/^[（(【\[]+/, "").replace(/[)）】\]]+$/, "").trim();
-}
-function epParseKey(name) {
-  var s = epStripDate(name);
-  var m = /第\s*(\d+)\s*期\s*([上下中])?/.exec(s) || /第\s*(\d+)\s*[集话話]\s*([上下中])?/.exec(s);
-  return m ? { num: Number(m[1]), part: m[2] || "" } : null;
-}
-function epIsBare(name) {
-  return /^第\s*\d+\s*(期|集|话|話)\s*[上下中]?$/.test(epStripDate(name));
-}
-var EP_JUNK = /纯享|加更|花絮|彩蛋|特辑|回顾|先导|预告|片花|解说/;
-var EP_HARD_JUNK = /加更|花絮|彩蛋|特辑|回顾|先导|预告|解说/;
-// 综艺对位：先按 TMDB 集名（第N期上/下）精确匹配，再按播出日期，再只数正片按序取，最后原始顺序兜底
-function pickEpisode(episodes, epIdx, episodeName, airDate) {
-  if (!episodes || !episodes.length) return null;
-  var i, k;
-  var want = epParseKey(episodeName);
-  if (want) {
-    var d0 = String(airDate || "").replace(/-/g, "");
-    if (/^\d{8}$/.test(d0)) {
-      for (i = 0; i < episodes.length; i++) { var dm = /第\s*(\d{8})\s*期\s*([上下中])?/.exec(episodes[i].name); if (dm && dm[1] === d0 && (dm[2] || "") === want.part) return episodes[i]; }
-    }
-    for (i = 0; i < episodes.length; i++) { k = epParseKey(episodes[i].name); if (k && k.num === want.num && k.part === want.part && epIsBare(episodes[i].name)) return episodes[i]; }
-    for (i = 0; i < episodes.length; i++) { k = epParseKey(episodes[i].name); if (k && k.num === want.num && k.part === want.part && !EP_HARD_JUNK.test(episodes[i].name)) return episodes[i]; }
-    for (i = 0; i < episodes.length; i++) { k = epParseKey(episodes[i].name); if (k && k.num === want.num && k.part === want.part) return episodes[i]; }
-  }
-  var d = String(airDate || "").replace(/-/g, "");
-  if (/^\d{8}$/.test(d)) {
-    var dated = episodes.filter(function (x) { return String(x.name || "").indexOf(d) === 0; });
-    if (want && want.part) { for (i = 0; i < dated.length; i++) { if (epStripDate(dated[i].name) === want.part) return dated[i]; } }
-    var bareDated = dated.filter(function (x) { return epIsBare(x.name); });
-    if (bareDated.length === 1) return bareDated[0];
-    if (want) { for (i = 0; i < dated.length; i++) { k = epParseKey(dated[i].name); if (k && k.num === want.num && k.part === want.part && !EP_HARD_JUNK.test(dated[i].name)) return dated[i]; } }
-  }
-  var main = episodes.filter(function (x) {
-    if (EP_JUNK.test(x.name)) return false;
-    if (epIsBare(x.name)) return true;
-    var sd = epStripDate(x.name);
-    if (sd === "上" || sd === "下" || sd === "中") return true;
-    return !!epParseKey(x.name);
-  });
-  if (!main.length) main = episodes.filter(function (x) { return /^\d{8}/.test(String(x.name || "")) && !EP_JUNK.test(x.name); });
-  if (epIdx >= 0 && main.length > epIdx) return main[epIdx];
-  return episodes[epIdx] || null;
-}
 
-async function sourcesFromDetail(detailUrl, epIdx, tapped, episodeName, airDate) {
+async function sourcesFromDetail(detailUrl, epIdx, tapped) {
   var $ = Widget.html.load(await fetchHtml(detailUrl));
   var title = $(".myui-content__detail h1.title").text().trim();
   var groups = parseGroups($);
   var resolved = await Promise.all(groups.map(async function (g) {
-    var ep = pickEpisode(g.episodes, epIdx, episodeName, airDate);
+    var ep = g.episodes[epIdx];
     if (!ep) return null;
     try {
       var playUrl = absUrl(ep.href);
@@ -878,7 +695,7 @@ async function loadResource(params) {
   var items = await search({ keyword: name, page: 1 });
   var best = pickBestCard(items, name, Number(params.season) || 0);
   if (!best) return [];
-  return sourcesFromDetail(best.link, epIdx, "", params.episodeName, params.airDate);
+  return sourcesFromDetail(best.link, epIdx, "");
 }
   return { loadList: loadList, search: search, loadDetail: loadDetail, loadResource: loadResource };
 })();
@@ -893,7 +710,7 @@ var IMPLS = {
 async function safeAsync(fn) { try { return await fn(); } catch (e) { return []; } }
 
 function tmdbArgs(slug, params) {
-  var a = { seriesName: params.seriesName, title: params.title, season: params.season, episode: params.episode, type: params.type, episodeName: params.episodeName, airDate: params.airDate };
+  var a = { seriesName: params.seriesName, title: params.title, season: params.season, episode: params.episode, type: params.type };
   return a;
 }
 
