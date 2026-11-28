@@ -1,7 +1,7 @@
 var WidgetMetadata = {
   "id": "omzm.rex.dashixiong",
   "title": "大师兄",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "requiredVersion": "0.0.1",
   "description": "大师兄单线路播放源（提取自驰时录模块，只取「大师兄」线路）：在 TMDB 详情页按片名匹配，探测通过才返回。",
   "author": "TG@ZenMoFiShi",
@@ -342,7 +342,17 @@ function dsEpisode(source, requested, movie, episodeName, airDate) {
     if (bareD.length === 1 && !wm) return bareD[0];
   }
   if (movie) return requested === 1 ? entries[0] || null : null;
-  for (var i = 0; i < entries.length; i++) if (entries[i].number === requested) return entries[i];
+  var numbered = entries.filter(function (e) { return e.number === requested; });
+  if (numbered.length === 1) return numbered[0];
+  // 综艺兜底：只数正片（第N期上/下、日期+上/下），滤掉回顾/先导/纯享/加更等后按序取
+  var mainE = entries.filter(function (e) {
+    if (/纯享|加更|花絮|彩蛋|特辑|回顾|先导|预告|片花|解说/.test(e.title)) return false;
+    var s = e.title.replace(/^\s*\d{8}\s*/, "").replace(/^\s*\d{4}[-./]\d{1,2}[-./]\d{1,2}\s*/, "").trim();
+    if (/^第\s*\d+\s*(期|集|话|話)\s*[上下中]?$/.test(s)) return true;
+    return s === "上" || s === "下" || s === "中";
+  });
+  if (requested >= 1 && mainE.length >= requested) return mainE[requested - 1];
+  if (numbered.length > 1) return numbered[0];
   return explicit ? null : entries[requested - 1] || null;
 }
 function dsParseTargets(source, origin) {
