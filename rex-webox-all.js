@@ -4,9 +4,9 @@
 var WidgetMetadata = {
   "id": "top.ddgksf2013.rex.weboxall",
   "title": "WeBox 多源合集",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "requiredVersion": "0.0.1",
-  "description": "WeBox 源包 6 个源（电影天堂/非凡/暴风/量子/欧乐/独播库）合并的纯播放源模块：在 TMDB 详情页按片名自动多源匹配，播放资源里汇总全部线路供选择。",
+  "description": "WeBox 源包 4 个源（暴风/量子/欧乐/独播库）合并的纯播放源模块：在 TMDB 详情页按片名自动多源匹配，播放资源里汇总全部线路供选择。",
   "author": "ddgksf2013",
   "site": "https://ddgksf2013.top/webox/index.json",
   "modules": [
@@ -692,10 +692,8 @@ async function loadResource(params) {
   return { loadList: loadList, search: search, loadDetail: loadDetail, loadResource: loadResource };
 })();
 
-var ORDER = ["dytt", "ffzy", "bfzy", "lzi", "ole", "dbku"];
+var ORDER = ["bfzy", "lzi", "ole", "dbku"];
 var IMPLS = {
-  dytt: makeMacCMS({ title: "电影天堂", base: "https://caiji.dyttzyapi.com/api.php/provide/vod" }),
-  ffzy: makeMacCMS({ title: "非凡资源", base: "https://cj.ffzyapi.com/api.php/provide/vod/from/ffm3u8" }),
   bfzy: makeMacCMS({ title: "暴风资源", base: "https://apibfzy.com/api.php/provide/vod" }),
   lzi: makeMacCMS({ title: "量子资源", base: "https://cj.lziapi.com/api.php/provide/vod" }),
   ole: oleImpl, dbku: dbkuImpl
@@ -708,7 +706,7 @@ function tmdbArgs(slug, params) {
   return a;
 }
 
-// TMDB 详情页播放：6 个源按片名并行匹配，汇总全部线路；单个源失败不影响其他源。
+// TMDB 详情页播放：4 个源按片名并行匹配，汇总全部线路；单个源失败不影响其他源。
 async function loadResource(params) {
   var name = String(params.seriesName || params.title || "").trim();
   if (!name) return [];
