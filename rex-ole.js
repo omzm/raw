@@ -5,7 +5,7 @@
 var WidgetMetadata = {
   "id": "top.ddgksf2013.rex.ole",
   "title": "欧乐影院",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "requiredVersion": "0.0.1",
   "description": "欧乐影院 纯播放源：在 TMDB 详情页按片名自动匹配出源，播放资源里可选线路。",
   "author": "ddgksf2013",
@@ -34,7 +34,7 @@ function absUrl(href) {
 }
 
 async function fetchHtml(url) {
-  var r = await Widget.http.get(url, { headers: { "User-Agent": UA, Referer: BASE + "/" } });
+  var r = await Widget.http.request({ url: url, method: "GET", headers: { "User-Agent": UA, Referer: BASE + "/" }, timeout: 10 });
   return String(r.data || "");
 }
 
