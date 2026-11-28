@@ -3,16 +3,16 @@
 // TMDB 详情页播放时，9 个源按片名并行匹配，线路汇总在播放资源里供选择。
 var WidgetMetadata = {
   "id": "top.ddgksf2013.rex.weboxall",
-  "title": "WeBox 多源合集",
-  "version": "1.5.1",
+  "title": "多源合集",
+  "version": "1.5.2",
   "requiredVersion": "0.0.1",
-  "description": "WeBox 源包 4 个源（暴风/量子/欧乐/独播库）合并的纯播放源模块：在 TMDB 详情页按片名自动多源匹配，播放资源里汇总全部线路供选择。",
+  "description": "4 个源（暴风/量子/欧乐/独播库）合并的纯播放源模块：在 TMDB 详情页按片名自动多源匹配，播放资源里汇总全部线路供选择。",
   "author": "ddgksf2013",
   "site": "https://ddgksf2013.top/webox/index.json",
   "modules": [
     {
       "id": "loadResource",
-      "title": "WeBox 多源",
+      "title": "多源合集",
       "functionName": "loadResource",
       "type": "stream",
       "cacheDuration": 0,
