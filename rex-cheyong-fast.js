@@ -1,10 +1,10 @@
 WidgetMetadata = {
   "id": "omzm.rex.cheyongfast",
   "title": "驰时录极速版",
-  "description": "驰时录极速版（基于驰时录多源播放优化）：轻量探测（只验播放列表层）+ 并发拉满 + 搜索/详情缓存，线路一条不少，出源更快。",
+  "description": "驰时录极速版：与多源合集同款做法——完全不探测，解析出地址直接返回全部线路；加搜索/详情/结果缓存，出源最快，死线需手动跳过。",
   "author": "TG@ZenMoFiShi",
   "site": "http://app2.dsx.ac",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "requiredVersion": "0.0.1",
   "modules": [
     {
@@ -353,8 +353,8 @@ function dsPlayData(object) {
 async function dsLine(source, episode, title, deadline) {
   var start = Date.now(), headers = dsHeaders(source.headers), targetList = dsParseTargets(source, episode.origin);
   async function probeAndReturn(play) {
-    var mediaHeaders = dsMerge(headers, play.headers), result = await dsProbe(play.url, mediaHeaders, play.type, deadline);
-    return { name: "驰时录 · " + dsText(source.name || source.code) + (result.quality ? " · " + result.quality : ""), description: title + " · " + episode.title + " · " + result.type, url: result.url, headers: mediaHeaders, customHeaders: mediaHeaders, _latency: Date.now() - start };
+    var mediaHeaders = dsMerge(headers, play.headers);
+    return { name: "驰时录 · " + dsText(source.name || source.code), description: title + " · " + episode.title, url: play.url, headers: mediaHeaders, customHeaders: mediaHeaders, _latency: Date.now() - start };
   }
   if (source.parse_secret) {
     try {
