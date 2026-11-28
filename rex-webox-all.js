@@ -1,5 +1,5 @@
-// Rex 模块：WeBox 多源合集
-// 由 WeBox 源包（ddgksf2013.top/webox/index.json，9 个源）移植合并为单个文件。
+// Rex 模块：多源合集
+// 多个源站合并为单个文件的纯播放源模块。
 // TMDB 详情页播放时，9 个源按片名并行匹配，线路汇总在播放资源里供选择。
 var WidgetMetadata = {
   "id": "top.ddgksf2013.rex.weboxall",
