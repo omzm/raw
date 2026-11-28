@@ -4,7 +4,7 @@
 var WidgetMetadata = {
   "id": "top.ddgksf2013.rex.weboxall",
   "title": "WeBox 多源合集",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "requiredVersion": "0.0.1",
   "description": "WeBox 源包 4 个源（暴风/量子/欧乐/独播库）合并的纯播放源模块：在 TMDB 详情页按片名自动多源匹配，播放资源里汇总全部线路供选择。",
   "author": "ddgksf2013",
@@ -133,13 +133,15 @@ function resourceForVod(v, epIdx) {
     var e = l.episodes[epIdx];
     if (!e) return;
     all.push({
-      name: TITLE + " · " + l.from,
+      name: TITLE,
       url: e.url,
-      description: (v.vod_name || "") + " · " + e.name + " · " + l.from
+      description: (v.vod_name || "") + " · " + e.name
     });
   });
   var direct = all.filter(function (s) { return /\.(m3u8|mp4)(\?|#|$)/i.test(s.url); });
-  return direct.length ? direct : all;
+  var picked = direct.length ? direct : all;
+  if (picked.length > 1) picked.forEach(function (s, i) { s.name = TITLE + " · 线路" + (i + 1); });
+  return picked;
 }
 
 function normTitle(s) {
